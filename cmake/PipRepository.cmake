@@ -44,10 +44,6 @@ ENDFUNCTION()
 
 # Get new version number from downloaded pip archive
 FUNCTION(GET_NEW_VERSION_FROM_OUTPUT version OUTPUT)
-  IF("${OUTPUT}" MATCHES "already downloaded")
-    RETURN()
-  ENDIF()
-
   STRING(REGEX REPLACE 
     ".*[-](.*)\.(tar|tgz|tbz2|txz|bz2|7z|zip).*" "\\1" VERSION "${OUTPUT}")
   SET(${version} ${VERSION} PARENT_SCOPE)
@@ -97,7 +93,7 @@ FUNCTION(SET_PIP_ARCHIVE)
   # time not what we want, if we want to use wheels you have to be explicit and
   # download it manually.
   EXECUTE_PROCESS(
-    COMMAND 
+    COMMAND
       pip download 
         --no-deps "${PIP_COMMAND}"
         --no-binary ${PIP_NAME}
@@ -110,9 +106,22 @@ FUNCTION(SET_PIP_ARCHIVE)
   # If new version is returned from the pip command we bump the package version
   # by replacing the old version with the new in package.py
   GET_NEW_VERSION_FROM_OUTPUT(VERSION ${PIP_OUT})
-  IF(VERSION AND NOT VERSION VERSION_EQUAL PIP_VERSION)
+  IF(UPGRADE
+      AND NOT VERSION VERSION_EQUAL PIP_VERSION
+      AND VERSION VERSION_GREATER PIP_VERSION
+  )
+    MESSAGE(STATUS "Upgrading pip package to version: ${VERSION}")
+    # We update the install prefix to ensure that the install location is using
+    # the bumped version.
+    STRING(REGEX REPLACE "${PIP_VERSION}" "${VERSION}"
+      BUMPED_INSTALL "${CMAKE_INSTALL_PREFIX}")
+    SET(CMAKE_INSTALL_PREFIX ${BUMPED_INSTALL} PARENT_SCOPE)
+
+    # We need to bump the version in package.py
+    BUMP_PACKAGE_VERSION(${VERSION})
+
+    # Finally replace scoped version variable with new
     SET(PIP_VERSION ${VERSION})
-    BUMP_PACKAGE_VERSION(${PIP_VERSION})
   ENDIF()
 
 

@@ -26,18 +26,31 @@ FUNCTION(PIP_INSTALL)
   # Create stageing directory where pip will install into
   SET(STAGE_DIR "${CMAKE_CURRENT_BINARY_DIR}/stage")
   FILE(TO_NATIVE_PATH ${STAGE_DIR} STAGE_DIR)
-  # Only create and unpack if directory does not exists
+
+
+  # Always delete stage directory if we are performing an upgrade to avoid old
+  # files polluting the staging area
+  IF(UPGRADE AND EXISTS ${STAGE_DIR})
+    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove_directory ${STAGE_DIR})
+  ENDIF()
+
+  # Only create and stage if directory does not exists
   IF(NOT EXISTS ${STAGE_DIR})
+    MESSAGE(STATUS "Staging ${PIP_URL} in ${STAGE_DIR}.")
+
     FILE(MAKE_DIRECTORY ${STAGE_DIR})
-    EXECUTE_PROCESS( COMMAND
-      pip install
-        --prefix=${STAGE_DIR}
-        --ignore-installed
-        --no-deps
-        --no-cache-dir
-        --install-option=--install-scripts=${STAGE_DIR}/bin
-        --install-option=--install-lib=${STAGE_DIR}/python
-        ${PIP_URL}
+    EXECUTE_PROCESS(
+      COMMAND
+        pip install
+          --prefix=${STAGE_DIR}
+          --ignore-installed
+          --no-deps
+          --no-cache-dir
+          --install-option=--install-scripts=${STAGE_DIR}/bin
+          --install-option=--install-lib=${STAGE_DIR}/python
+          ${PIP_URL}
+      OUTPUT_VARIABLE null
+      ERROR_VARIABLE null
     )
   ENDIF()
 
