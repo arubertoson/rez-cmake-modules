@@ -1,11 +1,11 @@
 #
 # function:
-# _REZ_PIP_INSTALL
+# PIP_INSTALL
 #
 # Function for installing python modules using pip.
 #
 # Usage:
-# _REZ_PIP_INSTALL(URL [ARG1,ARG2 ...])
+# PIP_INSTALL(URL [ARG1,ARG2 ...])
 #
 
 
@@ -14,12 +14,12 @@ IF(NOT REZ_BUILD_ENV)
 ENDIF()
 
 
-FUNCTION(_REZ_PIP_INSTALL)
+FUNCTION(PIP_INSTALL)
 
-  PARSE_ARGUMENTS(REZ "URL;ARGS" "" ${ARGN})
+  PARSE_ARGUMENTS(PIP "URL;ARGS" "" ${ARGN})
 
-  IF(NOT DEFINED REZ_URL)
-    MESSAGE(FATAL_ERROR "_REZ_PIP_INSTALL needs to be given URL.")
+  IF(NOT DEFINED PIP_URL)
+    MESSAGE(FATAL_ERROR "PIP_INSTALL needs to be given URL.")
   ENDIF()
 
 
@@ -35,7 +35,7 @@ FUNCTION(_REZ_PIP_INSTALL)
         --ignore-installed
         --no-deps
         --no-cache-dir
-        ${REZ_URL}
+        ${PIP_URL}
     )
   ENDIF()
 

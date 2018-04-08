@@ -1,9 +1,9 @@
 #
 # function:
-# REZ_SET_PIP_ARCHIVE
+# SET_PIP_ARCHIVE
 #
 # usage:
-# REZ_SET_PIP_ARCHIVE(NAME VERSION RELATIVE_PATH)
+# SET_PIP_ARCHIVE(NAME VERSION RELATIVE_PATH)
 #
 # This macro checks for the existance of a pip archive at the relative path,
 # under the path specified by $REZ_REPO_PAYLOAD_DIR. It will ask pip to download
@@ -16,9 +16,9 @@
 #
 
 
-FUNCTION(REZ_SET_PIP_ARCHIVE)
+FUNCTION(SET_PIP_ARCHIVE)
 
-  parse_arguments(REZ "NAME;VERSION;RELATIVE_PATH" "" ${ARGN})
+  parse_arguments(PIP "NAME;VERSION;RELATIVE_PATH" "" ${ARGN})
 
 
   IF(NOT DEFINED REZ_NAME OR NOT DEFINED REZ_VERSION)
@@ -28,23 +28,23 @@ FUNCTION(REZ_SET_PIP_ARCHIVE)
 
 
   # We can't determine location of archives without the rez repo variable set
-  IF(NOT DEFINED ENV{REZ_REPO_PAYLOAD_DIR})
-    MESSAGE(FATAL_ERROR "REZ_REPO_PAYLOAD_DIR environment variable is not set")
+  IF(NOT DEFINED ENV{PIP_REPO_PAYLOAD_DIR})
+    MESSAGE(FATAL_ERROR "PIP_REPO_PAYLOAD_DIR environment variable is not set")
   ENDIF()
 
 
   # Optional relative path under rez repo
-  IF(NOT DEFINED REZ_RELATIVE_PATH)
-    SET(REZ_SUBDIR pip)
+  IF(NOT DEFINED PIP_RELATIVE_PATH)
+    SET(PIP_SUBDIR pip)
   ELSE()
-    SET(REZ_SUBDIR ${REZ_RELATIVE_PATH})
+    SET(PIP_SUBDIR ${REZ_RELATIVE_PATH})
   ENDIF()
 
 
-  SET(REZ_ARCHIVE "$ENV{REZ_REPO_PAYLOAD_DIR}/${SUBDIR}/${REZ_NAME}")
-  MESSAGE("ARCHIVE: ${REZ_ARCHIVE}")
-  IF(NOT EXISTS REZ_ARCHIVE)
-    FILE(MAKE_DIRECTORY "${REZ_ARCHIVE}")
+  SET(PIP_ARCHIVE "$ENV{REZ_REPO_PAYLOAD_DIR}/${SUBDIR}/${REZ_NAME}")
+  MESSAGE("ARCHIVE: ${PIP_ARCHIVE}")
+  IF(NOT EXISTS PIP_ARCHIVE)
+    FILE(MAKE_DIRECTORY "${PIP_ARCHIVE}")
   ENDIF()
 
   # We try to avoid fetching wheels as they come prebuilt and is most of the
@@ -53,11 +53,11 @@ FUNCTION(REZ_SET_PIP_ARCHIVE)
   EXECUTE_PROCESS(
     COMMAND 
       pip download 
-        --no-deps "${REZ_NAME}==${REZ_VERSION}"
-        --no-binary ${REZ_NAME}
-      WORKING_DIRECTORY ${REZ_ARCHIVE}
+        --no-deps "${PIP_NAME}==${REZ_VERSION}"
+        --no-binary ${PIP_NAME}
+      WORKING_DIRECTORY ${PIP_ARCHIVE}
   )
-  FILE(GLOB PACKAGE_ARCHIVE "${REZ_ARCHIVE}/${REZ_NAME}*${REZ_VERSION}*")
+  FILE(GLOB PACKAGE_ARCHIVE "${PIP_ARCHIVE}/${REZ_NAME}*${REZ_VERSION}*")
 
 
   IF(PACKAGE_ARCHIVE) 
