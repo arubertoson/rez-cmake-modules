@@ -35,23 +35,18 @@ FUNCTION(PIP_INSTALL)
         --ignore-installed
         --no-deps
         --no-cache-dir
+        --install-option=--install-scripts=${STAGE_DIR}/bin
+        --install-option=--install-lib=${STAGE_DIR}/python
         ${PIP_URL}
     )
   ENDIF()
 
 
-  # Install target executables with correct permissions
-  INSTALL(
-    DIRECTORY ${STAGE_DIR}/bin/
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-    FILE_PERMISSIONS ${REZ_EXECUTABLE_FILE_INSTALL_PERMISSIONS}
-  )
-
-  # Install all other files excluding bin
-  INSTALL(
-    DIRECTORY ${STAGE_DIR}/
-    DESTINATION ${CMAKE_INSTALL_PREFIX}
-    PATTERN "bin" EXCLUDE
+  INSTALL(CODE
+    "EXECUTE_PROCESS(
+      COMMAND ${CMAKE_COMMAND} -E 
+        copy_directory ${STAGE_DIR} ${CMAKE_INSTALL_PREFIX}
+    )"
   )
 
 ENDFUNCTION()
