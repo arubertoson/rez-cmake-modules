@@ -18,14 +18,14 @@
 
 FUNCTION(REZ_SET_PIP_ARCHIVE)
 
-  # Parse given arguments
   parse_arguments(REZ "NAME;VERSION;RELATIVE_PATH" "" ${ARGN})
-  # MESSAGE(STATUS "NAME: ${REZ_NAME}")
-  # MESSAGE(STATUS "NAME: ${REZ_NAME}")
+
+
   IF(NOT DEFINED REZ_NAME OR NOT DEFINED REZ_VERSION)
     MESSAGE(FATAL_ERROR 
       "REZ_SET_PIP_ARCHIVE requires that NAME and VERSION are given.")
   ENDIF()
+
 
   # We can't determine location of archives without the rez repo variable set
   IF(NOT DEFINED ENV{REZ_REPO_PAYLOAD_DIR})
@@ -42,11 +42,14 @@ FUNCTION(REZ_SET_PIP_ARCHIVE)
 
 
   SET(REZ_ARCHIVE "$ENV{REZ_REPO_PAYLOAD_DIR}/${SUBDIR}/${REZ_NAME}")
+  MESSAGE("ARCHIVE: ${REZ_ARCHIVE}")
   IF(NOT EXISTS REZ_ARCHIVE)
     FILE(MAKE_DIRECTORY "${REZ_ARCHIVE}")
   ENDIF()
 
-
+  # We try to avoid fetching wheels as they come prebuilt and is most of the
+  # time not what we want, if we want to use wheels you have to be explicit and
+  # download it manually.
   EXECUTE_PROCESS(
     COMMAND 
       pip download 
