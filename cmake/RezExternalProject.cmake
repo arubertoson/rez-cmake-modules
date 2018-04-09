@@ -1,0 +1,91 @@
+#
+#
+#
+#
+
+
+IF(NOT REZ_BUILD_ENV)
+  MESSAGE(FATAL_ERROR "RezPipInstall requires that RezBuild has been included")
+ENDIF()
+
+
+include(ExternalProject)
+
+
+FUNCTION(EXTERNAL_PROJECT_ARGPARSER)
+  SET(ARGUMENTS 
+    "CONFIGURE_COMMAND"
+    "PATCH_COMMAND"
+    "UPDATE_COMMAND"
+    "INSTALL_COMMAND"
+    "BUILD_COMMAND"
+    )
+  SET(OPTIONS
+    "BUILD_IN_SOURCE"
+    )
+  PARSE_ARGUMENTS(REZ "${ARGUMENTS}" "${OPTIONS}" ${ARGN})
+
+  # Return parsed variables to the parent scope (caller function)
+  SET(ALL_ARGS ${ARGUMENTS} ${OPTIONS})
+  FOREACH(ARG ${ALL_ARGS})
+    SET(REZ_${ARG} ${REZ_${ARG}} PARENT_SCOPE)
+  ENDFOREACH()
+ENDFUNCTION()
+
+
+# Wrapper function for ExternalProject
+FUNCTION(_EXTERNAL_PROJECT_COMMAND)
+  MESSAGE(STATUS "Unpacking ${REZ_PACKAGE_ARCHIVE} ...")
+  ExternalProject_add(
+      ${PROJECT_NAME}
+      URL ${REZ_PACKAGE_ARCHIVE}
+      PREFIX ${PROJECT_NAME}
+      PATCH_COMMAND "${REZ_PATCH_COMMAND}"
+      UPDATE_COMMAND "${REZ_UPDATE_COMMAND}"
+      CONFIGURE_COMMAND "${REZ_CONFIGURE_COMMAND}"
+      INSTALL_COMMAND "${REZ_INSTALL_COMMAND}"
+      BUILD_IN_SOURCE ${REZ_BUILD_IN_SOURCE}
+      BUILD_COMMAND "${REZ_BUILD_COMMAND}"
+  )
+ENDFUNCTION()
+
+
+# For packages that require build and install through ExternalPackage
+FUNCTION(REZ_BUILD_EXTERNAL_PROJECT)
+  EXTERNAL_PROJECT_ARGPARSER(${ARGN})
+
+  IF(NOT REZ_INSTALL_COMMAND)
+    IF(${REZ_BUILD_INSTALL})
+      SET(REZ_INSTALL_COMMAND 
+        "${CMAKE_MAKE_PROGRAM}" 
+          "-j$ENV{REZ_BUILD_THREAD_COUNT}" 
+          "install"
+      )
+    ENDIF()
+  ENDIF()
+
+  IF(NOT REZ_BUILD_COMMAND)
+    SET(REZ_BUILD_COMMAND 
+      "${CMAKE_MAKE_PROGRAM}" 
+        "-j$ENV{REZ_BUILD_THREAD_COUNT}"
+    )
+  ENDIF()
+
+  _EXTERNAL_PROJECT_COMMAND()
+  install(CODE "message(STATUS \"Completed ${PROJECT_NAME} install\")")
+ENDFUNCTION()
+
+
+# For packages just utilizing unpack method for ExternalPackage
+FUNCTION(REZ_COPY_EXTERNAL_PROJECT)
+  EXTERNAL_PROJECT_ARGPARSER(${ARGN})
+
+  _EXTERNAL_PROJECT_COMMAND()
+
+  ExternalProject_Get_Property(${PROJECT_NAME} SOURCE_DIR)
+  install(
+    DIRECTORY ${SOURCE_DIR}/
+    DESTINATION ${CMAKE_INSTALL_PREFIX}
+    USE_SOURCE_PERMISSIONS
+  )
+ENDFUNCTION()
